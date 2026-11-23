@@ -1,367 +1,881 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Custom Button & Code Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>App Link & Code Vault</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-main: #f0f9ff;       /* Soft sky tint */
+      --bg-card: #ffffff;
+      --primary: #0284c7;       /* Sky blue accent */
+      --primary-dark: #0369a1;
+      --pink-accent: #ec4899;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 8px 24px rgba(2, 132, 199, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ================= COLORFUL ENTRY / LOCK SCREEN ================= */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 48%, #06b6d4 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 8s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .enter-btn {
+      background: #ffffff;
+      color: #be185d;
+      border: none;
+      padding: 18px 46px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .enter-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .enter-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* PIN Modal */
+    .pin-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .pin-modal.show {
+      display: flex;
+    }
+
+    .pin-card {
+      width: 100%;
+      max-width: 340px;
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .pin-card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+
+    .pin-card p {
+      margin: 0 0 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .pin-input {
+      width: 100%;
+      text-align: center;
+      font-size: 22px;
+      letter-spacing: 8px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      outline: none;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .pin-input:focus {
+      border-color: var(--pink-accent);
+    }
+
+    .pin-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pin-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-unlock {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: #fff;
+    }
+
+    .btn-cancel {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    /* ================= MAIN APP SHELL ================= */
+    #appShell {
+      display: none;
+      padding-bottom: 84px;
+    }
+
+    #appShell.active {
+      display: block;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(90deg, #e0f2fe 0%, #fce7f3 100%);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .main-content {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0 12px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .badge-count {
+      background: #e0f2fe;
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* ================= ITEM CARDS & COLLAPSIBLE CODE ================= */
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .cat-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .pill-web {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .pill-android {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .pill-telegram {
+      background: #fce7f3;
+      color: #be185d;
+    }
+
+    .item-name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .item-link-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    .item-link-text {
+      font-size: 12px;
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .open-link-btn {
+      background: var(--primary);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 9px;
+      white-space: nowrap;
+    }
+
+    /* Arrow trigger for code */
+    .arrow-toggle {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: var(--text-dark);
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .arrow-toggle.open {
+      transform: rotate(90deg);
+      background: #e0f2fe;
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+
+    .code-drawer {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    .code-drawer.open {
+      display: block;
+    }
+
+    textarea.code-box {
+      width: 100%;
+      min-height: 150px;
       background: #0f172a;
       color: #f8fafc;
-      padding: 16px;
-    }
-    .wrap { max-width: 920px; margin: 0 auto; }
-    h1 { font-size: 20px; margin: 0 0 6px; }
-    .hint { color: #94a3b8; font-size: 13px; margin-bottom: 16px; }
-
-    .box {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 18px;
-    }
-    .row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      font-size: 12px;
-      color: #cbd5e1;
-      margin-bottom: 5px;
-    }
-    input, select, textarea {
-      width: 100%;
-      background: #0b1220;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-    textarea.code {
-      min-height: 150px;
+      border: none;
+      border-radius: 14px;
+      padding: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 12.5px;
       line-height: 1.45;
-    }
-    button, a.btn-link {
-      display: inline-block;
-      padding: 9px 14px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #334155;
-      color: #f8fafc;
-      font-size: 13px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    button:hover, a.btn-link:hover { border-color: #38bdf8; }
-    .btn-save {
-      background: #22c55e;
-      color: #052e16;
-      border-color: #22c55e;
-      font-weight: 700;
-    }
-    .btn-copy {
-      background: #38bdf8;
-      color: #062033;
-      border-color: #38bdf8;
-      font-weight: 700;
-    }
-    .btn-del {
-      background: transparent;
-      color: #fca5a5;
-      border-color: #ef4444;
+      resize: vertical;
     }
 
-    .filter-bar {
+    .drawer-footer {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-sm {
+      padding: 8px 13px;
+      border-radius: 10px;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-copy {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-update {
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .btn-clear-code {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .btn-delete {
+      background: #fee2e2;
+      color: var(--danger);
+      margin-left: auto;
+    }
+
+    /* ================= CREATE FORM ================= */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .field-group {
       margin-bottom: 14px;
     }
-    .filter-btn.active {
-      background: #38bdf8;
-      color: #062033;
-      border-color: #38bdf8;
+
+    .field-group label {
+      display: block;
+      font-size: 13px;
       font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 6px;
     }
 
-    .custom-buttons-area {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .custom-btn {
-      background: #1e293b;
-      border: 1px solid #38bdf8;
-      color: #f8fafc;
-      padding: 11px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .custom-btn.selected {
-      background: #38bdf8;
-      color: #062033;
-    }
-    .tag {
-      font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.55);
-      color: #bae6fd;
-    }
-    .custom-btn.selected .tag {
-      background: rgba(6, 32, 51, 0.2);
-      color: #062033;
-    }
-
-    .detail-panel {
-      display: none;
-      background: #1e293b;
-      border: 1px solid #22c55e;
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+      width: 100%;
+      padding: 11px 13px;
       border-radius: 12px;
-      padding: 16px;
-      margin-top: 18px;
+      border: 1.5px solid var(--border);
+      background: #f8fafc;
+      color: var(--text-dark);
+      font-size: 14px;
+      font-family: inherit;
     }
-    .detail-panel.show { display: block; }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 10px 0 12px;
+
+    .field-group input:focus,
+    .field-group select:focus,
+    .field-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #ffffff;
     }
-    .msg {
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #ec4899);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(2, 132, 199, 0.25);
+    }
+
+    /* ================= BOTTOM NAVIGATION BAR ================= */
+    .bottom-nav {
       position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: #22c55e;
-      color: #052e16;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 6px 4px env(safe-area-inset-bottom, 6px);
+      box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      padding: 6px 4px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 11px;
       font-weight: 700;
-      padding: 10px 14px;
-      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--primary-dark);
+      background: #e0f2fe;
+    }
+
+    .nav-item.create-tab.active {
+      color: #be185d;
+      background: #fce7f3;
+    }
+
+    .empty-state {
+      text-align: center;
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 18px;
+      padding: 32px 18px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 10001;
       display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>কাস্টম বোতাম, লিংক ও HTML কোড ম্যানেজার</h1>
-    <div class="hint">উপরে নতুন বোতাম তৈরি করে সেভ করুন; নিচের বোতামে ক্লিক করে লিংক খুলুন বা কোড কপি/পরিবর্তন করুন।</div>
 
-    <!-- কাস্টম বোতাম তৈরির ফর্ম -->
-    <div class="box">
-      <h2 style="font-size:16px; margin:0 0 12px;">+ কাস্টম বোতাম তৈরি করুন</h2>
-      <div class="row">
-        <div>
-          <label for="btnName">ফাইল / বোতামের নাম</label>
-          <input type="text" id="btnName" placeholder="যেমন: সোশ্যাল ক্লাব প্রোফাইল" />
-        </div>
-        <div>
-          <label for="btnCat">ক্যাটাগরি (৩টি)</label>
-          <select id="btnCat">
-            <option value="শুধু ওয়েব">শুধু ওয়েব</option>
-            <option value="ওয়েব + টেলিগ্রাম">ওয়েব + টেলিগ্রাম</option>
-            <option value="ওয়েব + অ্যান্ড্রয়েড / নেটিভ">ওয়েব + অ্যান্ড্রয়েড / নেটিভ</option>
-          </select>
-        </div>
+  <!-- COLORFUL ENTRY PAGE (ONLY ENTER BUTTON) -->
+  <div id="lockScreen">
+    <button class="enter-btn" onclick="openPinModal()">ENTER</button>
+  </div>
+
+  <!-- PIN VERIFICATION MODAL -->
+  <div id="pinModal" class="pin-modal">
+    <div class="pin-card">
+      <h3>Enter PIN</h3>
+      <p>Enter your private PIN to open the app</p>
+      <input type="password" id="pinInput" class="pin-input" maxlength="12" placeholder="••••" />
+      <div class="pin-actions">
+        <button class="btn-cancel" onclick="closePinModal()">Cancel</button>
+        <button class="btn-unlock" onclick="verifyPin()">Unlock</button>
       </div>
-
-      <div style="margin-bottom:12px;">
-        <label for="btnLink">GitHub পেজ লিংক</label>
-        <input type="url" id="btnLink" placeholder="https://username.github.io/repo/page.html" />
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <label for="btnHtml">HTML কোড</label>
-        <textarea id="btnHtml" class="code" placeholder="এখানে আপনার HTML কোড বসান..."></textarea>
-      </div>
-
-      <button class="btn-save" onclick="createCustomButton()">সেভ ও বোতাম তৈরি করুন</button>
-    </div>
-
-    <!-- ক্যাটাগরি দিয়ে ফিল্টার -->
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="filterCat('ALL', this)">সব বোতাম</button>
-      <button class="filter-btn" onclick="filterCat('শুধু ওয়েব', this)">শুধু ওয়েব</button>
-      <button class="filter-btn" onclick="filterCat('ওয়েব + টেলিগ্রাম', this)">ওয়েব + টেলিগ্রাম</button>
-      <button class="filter-btn" onclick="filterCat('ওয়েব + অ্যান্ড্রয়েড / নেটিভ', this)">ওয়েব + অ্যান্ড্রয়েড / নেটিভ</button>
-    </div>
-
-    <!-- তলায় শো হওয়া কাস্টম বোতামগুলো -->
-    <div class="box">
-      <h2 style="font-size:16px; margin:0 0 12px;">আপনার তৈরি করা বোতামসমূহ</h2>
-      <div id="buttonsList" class="custom-buttons-area"></div>
-    </div>
-
-    <!-- বোতামে ক্লিক করলে নিচে ওপেন হওয়া অংশ -->
-    <div id="detailPanel" class="detail-panel">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <div>
-          <h3 id="viewName" style="margin:0; font-size:18px;"></h3>
-          <div id="viewCat" style="font-size:12px; color:#94a3b8; margin-top:2px;"></div>
-        </div>
-        <button onclick="closeDetail()">বন্ধ করুন</button>
-      </div>
-
-      <div class="actions">
-        <a id="viewOpenLink" href="#" target="_blank" class="btn-link">লিংক ওপেন করুন (সম্পূর্ণ পেজ)</a>
-        <button class="btn-copy" onclick="copyCode()">HTML কোড কপি করুন</button>
-        <button class="btn-save" onclick="updateCode()">নতুন কোড সেভ করুন</button>
-        <button class="btn-del" onclick="deleteCurrent()">এই বোতাম মুছুন</button>
-      </div>
-
-      <div id="viewRawLink" style="font-size:12px; color:#7dd3fc; margin-bottom:8px; word-break:break-all;"></div>
-
-      <label for="viewCodeArea">HTML কোড (এখান থেকে কপি করুন অথবা কেটে দিয়ে নতুন কোড বসিয়ে সেভ করুন)</label>
-      <textarea id="viewCodeArea" class="code"></textarea>
     </div>
   </div>
 
-  <div id="msg" class="msg"></div>
+  <!-- CHANGE PIN MODAL -->
+  <div id="changePinModal" class="pin-modal">
+    <div class="pin-card">
+      <h3>Change PIN</h3>
+      <p>Set a new private PIN for your vault</p>
+      <input type="password" id="newPinInput" class="pin-input" maxlength="12" placeholder="New PIN" />
+      <div class="pin-actions">
+        <button class="btn-cancel" onclick="closeChangePinModal()">Cancel</button>
+        <button class="btn-unlock" onclick="saveNewPin()">Save PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- MAIN APP -->
+  <div id="appShell">
+    <header class="app-header">
+      <div>
+        <h1 class="app-title" id="pageTitle">Home</h1>
+        <p class="app-subtitle" id="pageSubtitle">All saved links & HTML codes</p>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="openChangePinModal()">Change PIN</button>
+        <button class="icon-btn" onclick="lockApp()">Lock</button>
+      </div>
+    </header>
+
+    <main class="main-content" id="mainContent"></main>
+
+    <!-- BOTTOM NAVIGATION BAR (3 CATEGORY BUTTONS + 1 CREATE BUTTON) -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" id="tab-WEB" onclick="switchTab('WEB')">
+        <span class="nav-icon">🌐</span>
+        <span>Web</span>
+      </button>
+      <button class="nav-item" id="tab-WEB_ANDROID" onclick="switchTab('WEB_ANDROID')">
+        <span class="nav-icon">📱</span>
+        <span>Web + Android</span>
+      </button>
+      <button class="nav-item" id="tab-WEB_TELEGRAM" onclick="switchTab('WEB_TELEGRAM')">
+        <span class="nav-icon">✈️</span>
+        <span>Web + Telegram</span>
+      </button>
+      <button class="nav-item create-tab" id="tab-CREATE" onclick="switchTab('CREATE')">
+        <span class="nav-icon">➕</span>
+        <span>Create</span>
+      </button>
+    </nav>
+  </div>
 
   <script>
-    const KEY = 'custom_btn_hub_v2';
-    let list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    let activeCat = 'ALL';
-    let selectedId = null;
+    const ITEMS_KEY = 'app_vault_items_v1';
+    const PIN_KEY = 'app_vault_pin_v1';
 
-    function notify(text) {
-      const el = document.getElementById('msg');
-      el.textContent = text;
-      el.style.display = 'block';
-      clearTimeout(window._t);
-      window._t = setTimeout(() => { el.style.display = 'none'; }, 2000);
+    let items = JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]');
+    let currentTab = 'WEB';
+    let expandedIds = new Set();
+
+    function getSavedPin() {
+      return localStorage.getItem(PIN_KEY) || '1234';
     }
 
-    function saveStorage() {
-      localStorage.setItem(KEY, JSON.stringify(list));
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(window._toastT);
+      window._toastT = setTimeout(() => {
+        t.style.display = 'none';
+      }, 1900);
     }
 
-    function createCustomButton() {
-      const name = document.getElementById('btnName').value.trim();
-      const cat = document.getElementById('btnCat').value;
-      const link = document.getElementById('btnLink').value.trim();
-      const code = document.getElementById('btnHtml').value;
+    /* PIN & LOCK LOGIC */
+    function openPinModal() {
+      const modal = document.getElementById('pinModal');
+      const input = document.getElementById('pinInput');
+      input.value = '';
+      modal.classList.add('show');
+      setTimeout(() => input.focus(), 100);
+    }
 
-      if (!name) {
-        alert('অনুগ্রহ করে বোতাম বা ফাইলের নাম দিন।');
+    function closePinModal() {
+      document.getElementById('pinModal').classList.remove('show');
+    }
+
+    function verifyPin() {
+      const entered = document.getElementById('pinInput').value.trim();
+      if (entered === getSavedPin()) {
+        closePinModal();
+        document.getElementById('lockScreen').style.display = 'none';
+        document.getElementById('appShell').classList.add('active');
+        renderView();
+        showToast('Unlocked');
+      } else {
+        showToast('Wrong PIN');
+      }
+    }
+
+    document.getElementById('pinInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') verifyPin();
+    });
+
+    function lockApp() {
+      document.getElementById('appShell').classList.remove('active');
+      document.getElementById('lockScreen').style.display = 'flex';
+    }
+
+    function openChangePinModal() {
+      const input = document.getElementById('newPinInput');
+      input.value = '';
+      document.getElementById('changePinModal').classList.add('show');
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeChangePinModal() {
+      document.getElementById('changePinModal').classList.remove('show');
+    }
+
+    function saveNewPin() {
+      const nextPin = document.getElementById('newPinInput').value.trim();
+      if (nextPin.length < 4) {
+        showToast('PIN must be at least 4 characters');
+        return;
+      }
+      localStorage.setItem(PIN_KEY, nextPin);
+      closeChangePinModal();
+      showToast('PIN updated');
+    }
+
+    /* NAVIGATION & RENDERING */
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const activeBtn = document.getElementById('tab-' + tab);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getCategoryLabel(cat) {
+      if (cat === 'WEB') return 'Web';
+      if (cat === 'WEB_ANDROID') return 'Web + Android';
+      if (cat === 'WEB_TELEGRAM') return 'Web + Telegram';
+      return cat;
+    }
+
+    function getPillClass(cat) {
+      if (cat === 'WEB') return 'pill-web';
+      if (cat === 'WEB_ANDROID') return 'pill-android';
+      return 'pill-telegram';
+    }
+
+    function renderView() {
+      const titleEl = document.getElementById('pageTitle');
+      const subEl = document.getElementById('pageSubtitle');
+      const mainEl = document.getElementById('mainContent');
+
+      if (currentTab === 'CREATE') {
+        titleEl.textContent = 'Create Item';
+        subEl.textContent = 'Select category, name, link & HTML code';
+        mainEl.innerHTML = `
+          <div class="form-card">
+            <div class="field-group">
+              <label for="catSelect">Category</label>
+              <select id="catSelect">
+                <option value="WEB">Web</option>
+                <option value="WEB_ANDROID">Web + Android</option>
+                <option value="WEB_TELEGRAM">Web + Telegram</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="nameInput">Name</label>
+              <input type="text" id="nameInput" placeholder="e.g. Social Club Profile" />
+            </div>
+
+            <div class="field-group">
+              <label for="linkInput">Link</label>
+              <input type="url" id="linkInput" placeholder="https://username.github.io/page.html" />
+            </div>
+
+            <div class="field-group">
+              <label for="codeInput">HTML Code</label>
+              <textarea id="codeInput" class="code-box" placeholder="Paste HTML code here..."></textarea>
+            </div>
+
+            <button class="btn-submit" onclick="createItem()">Save Item</button>
+          </div>
+        `;
         return;
       }
 
-      const item = {
-        id: 'btn_' + Date.now(),
+      const categoryItems = items.filter(x => x.category === currentTab);
+      const catLabel = getCategoryLabel(currentTab);
+
+      titleEl.textContent = 'Home · ' + catLabel;
+      subEl.textContent = 'Tap arrow to view or copy HTML code';
+
+      let html = `
+        <div class="section-heading">
+          <h2>${esc(catLabel)}</h2>
+          <span class="badge-count">${categoryItems.length} Saved</span>
+        </div>
+      `;
+
+      if (!categoryItems.length) {
+        html += `<div class="empty-state">No items saved under <strong>${esc(catLabel)}</strong> yet. Tap <strong>Create</strong> below to add one.</div>`;
+        mainEl.innerHTML = html;
+        return;
+      }
+
+      html += categoryItems.map(item => {
+        const isOpen = expandedIds.has(item.id);
+        return `
+          <div class="item-card" id="card-${esc(item.id)}">
+            <div class="item-top">
+              <div>
+                <span class="cat-pill ${getPillClass(item.category)}">${esc(getCategoryLabel(item.category))}</span>
+                <h3 class="item-name">${esc(item.name)}</h3>
+              </div>
+              <button class="arrow-toggle ${isOpen ? 'open' : ''}" onclick="toggleCode('${esc(item.id)}')" title="Toggle HTML Code">➤</button>
+            </div>
+
+            ${item.link ? `
+              <div class="item-link-row">
+                <a class="item-link-text" href="${escAttr(item.link)}" target="_blank" rel="noopener noreferrer">${esc(item.link)}</a>
+                <a class="open-link-btn" href="${escAttr(item.link)}" target="_blank" rel="noopener noreferrer">Open</a>
+              </div>
+            ` : `
+              <div class="item-link-row">
+                <span class="item-link-text" style="color:#94a3b8;">No link added</span>
+              </div>
+            `}
+
+            <div class="code-drawer ${isOpen ? 'open' : ''}" id="drawer-${esc(item.id)}">
+              <textarea class="code-box" id="editor-${esc(item.id)}" placeholder="HTML code...">${esc(item.code || '')}</textarea>
+              <div class="drawer-footer">
+                <button class="btn-sm btn-copy" onclick="copyItemCode('${esc(item.id)}')">Copy Code</button>
+                <button class="btn-sm btn-update" onclick="updateItemCode('${esc(item.id)}')">Save Code</button>
+                <button class="btn-sm btn-clear-code" onclick="clearItemCode('${esc(item.id)}')">Clear Code</button>
+                <button class="btn-sm btn-delete" onclick="deleteItem('${esc(item.id)}')">Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      mainEl.innerHTML = html;
+    }
+
+    function persistItems() {
+      localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+    }
+
+    function createItem() {
+      const category = document.getElementById('catSelect').value;
+      const name = document.getElementById('nameInput').value.trim();
+      const link = document.getElementById('linkInput').value.trim();
+      const code = document.getElementById('codeInput').value;
+
+      if (!name) {
+        showToast('Please enter a name');
+        return;
+      }
+
+      const newItem = {
+        id: 'itm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        category,
         name,
-        cat,
         link,
         code
       };
 
-      list.push(item);
-      saveStorage();
-
-      document.getElementById('btnName').value = '';
-      document.getElementById('btnLink').value = '';
-      document.getElementById('btnHtml').value = '';
-
-      renderButtons();
-      openButtonDetail(item.id);
-      notify('নতুন কাস্টম বোতাম তৈরি হয়েছে!');
+      items.unshift(newItem);
+      persistItems();
+      showToast('Saved');
+      switchTab(category);
     }
 
-    function filterCat(cat, btn) {
-      activeCat = cat;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      renderButtons();
-    }
-
-    function renderButtons() {
-      const container = document.getElementById('buttonsList');
-      const items = activeCat === 'ALL' ? list : list.filter(x => x.cat === activeCat);
-
-      if (!items.length) {
-        container.innerHTML = '<div style="color:#94a3b8; font-size:14px;">এখনো কোনো বোতাম তৈরি করা হয়নি।</div>';
-        return;
-      }
-
-      container.innerHTML = items.map(item => `
-        <button class="custom-btn ${item.id === selectedId ? 'selected' : ''}" onclick="openButtonDetail('${item.id}')">
-          <span>${esc(item.name)}</span>
-          <span class="tag">${esc(item.cat)}</span>
-        </button>
-      `).join('');
-    }
-
-    function openButtonDetail(id) {
-      const item = list.find(x => x.id === id);
-      if (!item) return;
-      selectedId = id;
-      renderButtons();
-
-      document.getElementById('viewName').textContent = item.name;
-      document.getElementById('viewCat').textContent = 'ক্যাটাগরি: ' + item.cat;
-      document.getElementById('viewCodeArea').value = item.code || '';
-
-      const linkBtn = document.getElementById('viewOpenLink');
-      const rawLink = document.getElementById('viewRawLink');
-      if (item.link) {
-        linkBtn.href = item.link;
-        linkBtn.style.pointerEvents = 'auto';
-        linkBtn.style.opacity = '1';
-        rawLink.textContent = 'লিংক: ' + item.link;
+    function toggleCode(id) {
+      if (expandedIds.has(id)) {
+        expandedIds.delete(id);
       } else {
-        linkBtn.href = '#';
-        linkBtn.style.pointerEvents = 'none';
-        linkBtn.style.opacity = '0.5';
-        rawLink.textContent = 'কোনো লিংক সেভ করা হয়নি';
+        expandedIds.add(id);
       }
-
-      const panel = document.getElementById('detailPanel');
-      panel.classList.add('show');
-      panel.scrollIntoView({ behavior: 'smooth' });
+      renderView();
     }
 
-    function closeDetail() {
-      selectedId = null;
-      document.getElementById('detailPanel').classList.remove('show');
-      renderButtons();
-    }
-
-    function copyCode() {
-      const ta = document.getElementById('viewCodeArea');
+    function copyItemCode(id) {
+      const ta = document.getElementById('editor-' + id);
+      if (!ta) return;
       ta.select();
       navigator.clipboard?.writeText(ta.value).catch(() => document.execCommand('copy'));
-      notify('HTML কোড কপি হয়েছে!');
+      showToast('Code copied');
     }
 
-    function updateCode() {
-      if (!selectedId) return;
-      const newCode = document.getElementById('viewCodeArea').value;
-      list = list.map(x => x.id === selectedId ? { ...x, code: newCode } : x);
-      saveStorage();
-      notify('নতুন কোড সেভ হয়ে গেছে!');
+    function updateItemCode(id) {
+      const ta = document.getElementById('editor-' + id);
+      if (!ta) return;
+      items = items.map(x => x.id === id ? { ...x, code: ta.value } : x);
+      persistItems();
+      showToast('Code updated');
     }
 
-    function deleteCurrent() {
-      if (!selectedId) return;
-      if (!confirm('এই বোতামটি ডিলিট করতে চান?')) return;
-      list = list.filter(x => x.id !== selectedId);
-      saveStorage();
-      closeDetail();
-      notify('বোতাম ডিলিট করা হয়েছে');
+    function clearItemCode(id) {
+      const ta = document.getElementById('editor-' + id);
+      if (!ta) return;
+      ta.value = '';
+      items = items.map(x => x.id === id ? { ...x, code: '' } : x);
+      persistItems();
+      showToast('Code cleared');
+    }
+
+    function deleteItem(id) {
+      if (!confirm('Delete this item?')) return;
+      items = items.filter(x => x.id !== id);
+      expandedIds.delete(id);
+      persistItems();
+      renderView();
+      showToast('Deleted');
     }
 
     function esc(s) {
@@ -370,7 +884,9 @@
       }[c]));
     }
 
-    renderButtons();
+    function escAttr(s) {
+      return String(s || '').replace(/"/g, '&quot;');
+    }
   </script>
 </body>
 </html>
