@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Button & Code Hub</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .hint { color: #94a3b8; font-size: 13px; margin-bottom: 16px; }
+
+    .box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #0b1220;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    textarea.code {
+      min-height: 150px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    button, a.btn-link {
+      display: inline-block;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #334155;
+      color: #f8fafc;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button:hover, a.btn-link:hover { border-color: #38bdf8; }
+    .btn-save {
+      background: #22c55e;
+      color: #052e16;
+      border-color: #22c55e;
+      font-weight: 700;
+    }
+    .btn-copy {
+      background: #38bdf8;
+      color: #062033;
+      border-color: #38bdf8;
+      font-weight: 700;
+    }
+    .btn-del {
+      background: transparent;
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .filter-btn.active {
+      background: #38bdf8;
+      color: #062033;
+      border-color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .custom-buttons-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .custom-btn {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #f8fafc;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .custom-btn.selected {
+      background: #38bdf8;
+      color: #062033;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #bae6fd;
+    }
+    .custom-btn.selected .tag {
+      background: rgba(6, 32, 51, 0.2);
+      color: #062033;
+    }
+
+    .detail-panel {
+      display: none;
+      background: #1e293b;
+      border: 1px solid #22c55e;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+    .detail-panel.show { display: block; }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+    .msg {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #22c55e;
+      color: #052e16;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>কাস্টম বোতাম, লিংক ও HTML কোড ম্যানেজার</h1>
+    <div class="hint">উপরে নতুন বোতাম তৈরি করে সেভ করুন; নিচের বোতামে ক্লিক করে লিংক খুলুন বা কোড কপি/পরিবর্তন করুন।</div>
+
+    <!-- কাস্টম বোতাম তৈরির ফর্ম -->
+    <div class="box">
+      <h2 style="font-size:16px; margin:0 0 12px;">+ কাস্টম বোতাম তৈরি করুন</h2>
+      <div class="row">
+        <div>
+          <label for="btnName">ফাইল / বোতামের নাম</label>
+          <input type="text" id="btnName" placeholder="যেমন: সোশ্যাল ক্লাব প্রোফাইল" />
+        </div>
+        <div>
+          <label for="btnCat">ক্যাটাগরি (৩টি)</label>
+          <select id="btnCat">
+            <option value="শুধু ওয়েব">শুধু ওয়েব</option>
+            <option value="ওয়েব + টেলিগ্রাম">ওয়েব + টেলিগ্রাম</option>
+            <option value="ওয়েব + অ্যান্ড্রয়েড / নেটিভ">ওয়েব + অ্যান্ড্রয়েড / নেটিভ</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label for="btnLink">GitHub পেজ লিংক</label>
+        <input type="url" id="btnLink" placeholder="https://username.github.io/repo/page.html" />
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label for="btnHtml">HTML কোড</label>
+        <textarea id="btnHtml" class="code" placeholder="এখানে আপনার HTML কোড বসান..."></textarea>
+      </div>
+
+      <button class="btn-save" onclick="createCustomButton()">সেভ ও বোতাম তৈরি করুন</button>
+    </div>
+
+    <!-- ক্যাটাগরি দিয়ে ফিল্টার -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterCat('ALL', this)">সব বোতাম</button>
+      <button class="filter-btn" onclick="filterCat('শুধু ওয়েব', this)">শুধু ওয়েব</button>
+      <button class="filter-btn" onclick="filterCat('ওয়েব + টেলিগ্রাম', this)">ওয়েব + টেলিগ্রাম</button>
+      <button class="filter-btn" onclick="filterCat('ওয়েব + অ্যান্ড্রয়েড / নেটিভ', this)">ওয়েব + অ্যান্ড্রয়েড / নেটিভ</button>
+    </div>
+
+    <!-- তলায় শো হওয়া কাস্টম বোতামগুলো -->
+    <div class="box">
+      <h2 style="font-size:16px; margin:0 0 12px;">আপনার তৈরি করা বোতামসমূহ</h2>
+      <div id="buttonsList" class="custom-buttons-area"></div>
+    </div>
+
+    <!-- বোতামে ক্লিক করলে নিচে ওপেন হওয়া অংশ -->
+    <div id="detailPanel" class="detail-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 id="viewName" style="margin:0; font-size:18px;"></h3>
+          <div id="viewCat" style="font-size:12px; color:#94a3b8; margin-top:2px;"></div>
+        </div>
+        <button onclick="closeDetail()">বন্ধ করুন</button>
+      </div>
+
+      <div class="actions">
+        <a id="viewOpenLink" href="#" target="_blank" class="btn-link">লিংক ওপেন করুন (সম্পূর্ণ পেজ)</a>
+        <button class="btn-copy" onclick="copyCode()">HTML কোড কপি করুন</button>
+        <button class="btn-save" onclick="updateCode()">নতুন কোড সেভ করুন</button>
+        <button class="btn-del" onclick="deleteCurrent()">এই বোতাম মুছুন</button>
+      </div>
+
+      <div id="viewRawLink" style="font-size:12px; color:#7dd3fc; margin-bottom:8px; word-break:break-all;"></div>
+
+      <label for="viewCodeArea">HTML কোড (এখান থেকে কপি করুন অথবা কেটে দিয়ে নতুন কোড বসিয়ে সেভ করুন)</label>
+      <textarea id="viewCodeArea" class="code"></textarea>
+    </div>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <script>
+    const KEY = 'custom_btn_hub_v2';
+    let list = JSON.parse(localStorage.getItem(KEY) || '[]');
+    let activeCat = 'ALL';
+    let selectedId = null;
+
+    function notify(text) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.style.display = 'block';
+      clearTimeout(window._t);
+      window._t = setTimeout(() => { el.style.display = 'none'; }, 2000);
+    }
+
+    function saveStorage() {
+      localStorage.setItem(KEY, JSON.stringify(list));
+    }
+
+    function createCustomButton() {
+      const name = document.getElementById('btnName').value.trim();
+      const cat = document.getElementById('btnCat').value;
+      const link = document.getElementById('btnLink').value.trim();
+      const code = document.getElementById('btnHtml').value;
+
+      if (!name) {
+        alert('অনুগ্রহ করে বোতাম বা ফাইলের নাম দিন।');
+        return;
+      }
+
+      const item = {
+        id: 'btn_' + Date.now(),
+        name,
+        cat,
+        link,
+        code
+      };
+
+      list.push(item);
+      saveStorage();
+
+      document.getElementById('btnName').value = '';
+      document.getElementById('btnLink').value = '';
+      document.getElementById('btnHtml').value = '';
+
+      renderButtons();
+      openButtonDetail(item.id);
+      notify('নতুন কাস্টম বোতাম তৈরি হয়েছে!');
+    }
+
+    function filterCat(cat, btn) {
+      activeCat = cat;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderButtons();
+    }
+
+    function renderButtons() {
+      const container = document.getElementById('buttonsList');
+      const items = activeCat === 'ALL' ? list : list.filter(x => x.cat === activeCat);
+
+      if (!items.length) {
+        container.innerHTML = '<div style="color:#94a3b8; font-size:14px;">এখনো কোনো বোতাম তৈরি করা হয়নি।</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <button class="custom-btn ${item.id === selectedId ? 'selected' : ''}" onclick="openButtonDetail('${item.id}')">
+          <span>${esc(item.name)}</span>
+          <span class="tag">${esc(item.cat)}</span>
+        </button>
+      `).join('');
+    }
+
+    function openButtonDetail(id) {
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+      selectedId = id;
+      renderButtons();
+
+      document.getElementById('viewName').textContent = item.name;
+      document.getElementById('viewCat').textContent = 'ক্যাটাগরি: ' + item.cat;
+      document.getElementById('viewCodeArea').value = item.code || '';
+
+      const linkBtn = document.getElementById('viewOpenLink');
+      const rawLink = document.getElementById('viewRawLink');
+      if (item.link) {
+        linkBtn.href = item.link;
+        linkBtn.style.pointerEvents = 'auto';
+        linkBtn.style.opacity = '1';
+        rawLink.textContent = 'লিংক: ' + item.link;
+      } else {
+        linkBtn.href = '#';
+        linkBtn.style.pointerEvents = 'none';
+        linkBtn.style.opacity = '0.5';
+        rawLink.textContent = 'কোনো লিংক সেভ করা হয়নি';
+      }
+
+      const panel = document.getElementById('detailPanel');
+      panel.classList.add('show');
+      panel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeDetail() {
+      selectedId = null;
+      document.getElementById('detailPanel').classList.remove('show');
+      renderButtons();
+    }
+
+    function copyCode() {
+      const ta = document.getElementById('viewCodeArea');
+      ta.select();
+      navigator.clipboard?.writeText(ta.value).catch(() => document.execCommand('copy'));
+      notify('HTML কোড কপি হয়েছে!');
+    }
+
+    function updateCode() {
+      if (!selectedId) return;
+      const newCode = document.getElementById('viewCodeArea').value;
+      list = list.map(x => x.id === selectedId ? { ...x, code: newCode } : x);
+      saveStorage();
+      notify('নতুন কোড সেভ হয়ে গেছে!');
+    }
+
+    function deleteCurrent() {
+      if (!selectedId) return;
+      if (!confirm('এই বোতামটি ডিলিট করতে চান?')) return;
+      list = list.filter(x => x.id !== selectedId);
+      saveStorage();
+      closeDetail();
+      notify('বোতাম ডিলিট করা হয়েছে');
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    renderButtons();
+  </script>
+</body>
+</html>
